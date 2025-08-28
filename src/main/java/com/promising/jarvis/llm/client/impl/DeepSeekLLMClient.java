@@ -7,15 +7,11 @@ import com.promising.jarvis.llm.deepseek.DeepSeekRequestBody;
 import joptsimple.internal.Strings;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Properties;
-import java.util.Scanner;
 
 public class DeepSeekLLMClient implements LLMClient {
 
