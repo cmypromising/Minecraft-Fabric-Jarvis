@@ -1,5 +1,6 @@
 package com.promising.jarvis;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.promising.jarvis.core.register.NLRegister;
 import com.promising.jarvis.core.register.NLRegisterFactory;
 import net.fabricmc.api.ModInitializer;

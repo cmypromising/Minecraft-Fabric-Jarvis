@@ -1,84 +1,106 @@
 package com.promising.jarvis.core.executor.impl;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.context.CommandContext;
 import com.promising.jarvis.Jarvis;
 import com.promising.jarvis.core.parser.NLParser;
 import com.promising.jarvis.core.parser.impl.DeepSeekParser;
 import com.promising.jarvis.llm.deepseek.ContentResponseBody;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.MessageArgument;
+import net.minecraft.server.commands.ExecuteCommand;
+import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
 
-import java.util.Objects;
-
-/**
- *
- */
 public class CommandExecutor {
-    // 语言模式映射
     private static final NLParser parser = new DeepSeekParser();
 
     /**
-     * @param dispatcher: 命令调度器
+     * 注册命令 - 使用与 Jade 相同的方式
      */
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        // 使用新的获取参数方法
-        dispatcher.register(
-                CommandManager.literal("nl")
-                        .requires(source -> source.hasPermissionLevel(2))
-                        .then(CommandManager.argument("text", StringArgumentType.greedyString())
-                                .executes(CommandExecutor::action)
-                        )
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("nl")
+                // 权限检查 - 使用 Commands.LEVEL_GAMEMASTERS (权限等级2)
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                // 使用 MessageArgument.message() 处理带空格的文本
+                .then(Commands.argument("text", MessageArgument.message())
+                        .executes(CommandExecutor::executeCommand)
+                )
         );
     }
 
     /**
-     *
-     * @param context: 待执行命令的文本，例如 /nl ...... 中的 ......
-     * @return : 执行结果的响应
+     * 执行命令
      */
-    private static int action(CommandContext<ServerCommandSource> context) {
-        String input = StringArgumentType.getString(context, "text");
-        Jarvis.LOGGER.info("text: {}", input);
-        ServerCommandSource source = context.getSource();
-        String currentPlayerInfo = getCurrentPlayerInformation(source);
+    private static int executeCommand(CommandContext<CommandSourceStack> context) {
+        // 获取消息参数
+        MessageArgument.Message message = context.getArgument("text", MessageArgument.Message.class);
+        String input = message.toString();
+        CommandSourceStack source = context.getSource();
 
         try {
-            ContentResponseBody resultBody = parser.parse(input, currentPlayerInfo);
+            ContentResponseBody resultBody = parser.parse(input, getCurrentPlayerInformation(source));
+
             if (resultBody.getType() == 1) {
-                source.getServer().getCommandManager().executeWithPrefix(
-                        source,
-                        resultBody.getCommand()
-                );
+                String commandToExecute = resultBody.getCommand();
+                Jarvis.LOGGER.info("执行命令: {}", commandToExecute);
+
+                // 方式2：直接使用命令分发器
+                CommandDispatcher<CommandSourceStack> dispatcher = source.getServer()
+                        .getCommands()
+                        .getDispatcher();
+
+                // 解析并执行命令
+                ParseResults<CommandSourceStack> parseResults = dispatcher.parse(commandToExecute, source);
+                int result = dispatcher.execute(parseResults);
+
+                if (result > 0) {
+                    source.sendSuccess(() -> Component.literal("✓ 命令执行成功"), false);
+                }
             }
-            source.sendMessage(Text.of("Jarvis: " + resultBody.getAdditionalInfo()));
+
+            // 发送附加信息
+            if (resultBody.getAdditionalInfo() != null && !resultBody.getAdditionalInfo().isEmpty()) {
+                source.sendSuccess(() -> Component.literal("Jarvis: " + resultBody.getAdditionalInfo()), false);
+            }
+
             return 1;
+
         } catch (Exception e) {
-            source.sendError(Text.of("命令执行失败：" + e.getMessage()));
+            source.sendFailure(Component.literal("命令执行失败: " + e.getMessage()));
             return 0;
         }
     }
 
-    private static String getCurrentPlayerInformation(ServerCommandSource source) {
-        // 玩家名称
-        String playerName = source.getName();
+    /**
+     * 获取当前玩家信息
+     */
+    private static String getCurrentPlayerInformation(CommandSourceStack source) {
+        var player = source.getPlayer();
+        if (player == null) {
+            return "执行者: " + source.getTextName() + " (非玩家实体)";
+        }
 
-        // 获取玩家的位置
-        BlockPos playerPosition = Objects.requireNonNull(source.getPlayer()).getBlockPos(); // 玩家位置
-        double posX = playerPosition.getX();
-        double posY = playerPosition.getY();
-        double posZ = playerPosition.getZ();
+        // 玩家位置
+        BlockPos pos = player.blockPosition();
 
-        // 获取玩家的健康、饥饿和经验
-        float health = source.getPlayer().getHealth(); // 健康值
-        int foodLevel = source.getPlayer().getHungerManager().getFoodLevel(); // 饥饿值
-        int experience = source.getPlayer().experienceLevel; // 经验值
+        // 玩家状态
+        float health = player.getHealth();
+        int foodLevel = player.getFoodData().getFoodLevel();
+        int experienceLevel = player.experienceLevel;
 
-        // 拼接信息为字符串
-        return String.format("\n姓名: %s \n坐标: (%.2f, %.2f, %.2f)\n健康值: %.1f\n饥饿值: %d\n经验值: %d",
-                playerName, posX, posY, posZ, health, foodLevel, experience);
+        return String.format(
+                "玩家信息:\n" +
+                        "  名称: %s\n" +
+                        "  坐标: %.1f, %.1f, %.1f\n" +
+                        "  生命值: %.1f\n" +
+                        "  饥饿值: %d\n" +
+                        "  经验等级: %d",
+                player.getName().getString(),
+                pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                health, foodLevel, experienceLevel
+        );
     }
 }

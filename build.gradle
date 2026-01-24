@@ -1,14 +1,19 @@
 plugins {
-	id 'fabric-loom' version '1.8-SNAPSHOT'
+	id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
+	id "me.modmuss50.mod-publish-plugin" version "1.1.0"
 }
 
-version = project.mod_version
+version = "mc" + project.minecraft_version + "-" + project.mod_version
 group = project.maven_group
 
 base {
 	archivesName = project.archives_base_name
 }
+
+// 可选：添加源集配置，如果你的源代码目录不是默认的src/main/java和src/main/resources
+// sourceSets.main.java.srcDirs += 'java'
+// sourceSets.main.resources.srcDirs += 'resources'
 
 repositories {
 	maven { url "https://maven.shedaniel.me/" }
@@ -20,30 +25,30 @@ repositories {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
-	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}") {
+	modCompileOnly("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}") {
 		exclude(group: "net.fabricmc.fabric-api")
 	}
-	include "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}"
-
-	modCompileOnly "me.shedaniel:RoughlyEnoughItems-fabric:15.0.728"
-	modCompileOnly "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
-
+//
+//	modCompileOnly "me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}"
+	modCompileOnlyApi "mezz.jei:jei-1.21.8-common-api:${jei_version}"
 	// 测试依赖
 	testImplementation 'junit:junit:4.13.2'
 }
 
 processResources {
-	inputs.property "version", project.version
+	// 使用一个独立的版本变量，以便在fabric.mod.json中使用不同的版本格式
+	def semver_version = project.mod_version + "+mc" + project.minecraft_version
+	inputs.property "version", semver_version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+		expand "version": semver_version
 	}
 }
 
@@ -70,7 +75,7 @@ jar {
 	}
 }
 
-// configure the maven publication
+// 如果你需要发布到Maven仓库，可以参考苹果皮的publishing配置
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
@@ -79,11 +84,6 @@ publishing {
 		}
 	}
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
+	// 根据需要配置仓库，这里可以保留你的配置或使用苹果皮的方式（从属性或环境变量读取凭证）
+	// 注意：苹果皮的配置更安全，因为它支持从环境变量读取凭证
 }
