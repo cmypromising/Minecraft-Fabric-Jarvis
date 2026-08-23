@@ -3,82 +3,58 @@ package com.promising.jarvis.core.executor.impl;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.promising.jarvis.Jarvis;
-import com.promising.jarvis.core.parser.NLParser;
-import com.promising.jarvis.core.parser.impl.DeepSeekParser;
-import com.promising.jarvis.llm.deepseek.ContentResponseBody;
+import com.promising.jarvis.core.JarvisRuntime;
+import com.promising.jarvis.core.command.CommandRequest;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
 
-import java.util.Objects;
+/** Brigadier adapter for the intelligent command-line entry points. */
+public final class CommandExecutor {
+    private CommandExecutor() {}
 
-/**
- *
- */
-public class CommandExecutor {
-    // 语言模式映射
-    private static final NLParser parser = new DeepSeekParser();
-
-    /**
-     * @param dispatcher: 命令调度器
-     */
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        // 使用新的获取参数方法
-        dispatcher.register(
-                CommandManager.literal("nl")
-                        .requires(source -> source.hasPermissionLevel(2))
-                        .then(CommandManager.argument("text", StringArgumentType.greedyString())
-                                .executes(CommandExecutor::action)
-                        )
-        );
+        dispatcher.register(CommandManager.literal("nl")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.argument("text", StringArgumentType.greedyString())
+                        .executes(CommandExecutor::legacyAction)));
+        dispatcher.register(CommandManager.literal("nlp")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> help(context.getSource()))
+                .then(CommandManager.argument("text", StringArgumentType.greedyString())
+                        .executes(CommandExecutor::nlpAction)));
     }
 
-    /**
-     *
-     * @param context: 待执行命令的文本，例如 /nl ...... 中的 ......
-     * @return : 执行结果的响应
-     */
-    private static int action(CommandContext<ServerCommandSource> context) {
-        String input = StringArgumentType.getString(context, "text");
-        Jarvis.LOGGER.info("text: {}", input);
-        ServerCommandSource source = context.getSource();
-        String currentPlayerInfo = getCurrentPlayerInformation(source);
+    private static int legacyAction(CommandContext<ServerCommandSource> context) {
+        return submit(context.getSource(), StringArgumentType.getString(context, "text"));
+    }
 
-        try {
-            ContentResponseBody resultBody = parser.parse(input, currentPlayerInfo);
-            if (resultBody.getType() == 1) {
-                source.getServer().getCommandManager().executeWithPrefix(
-                        source,
-                        resultBody.getCommand()
-                );
-            }
-            source.sendMessage(Text.of("Jarvis: " + resultBody.getAdditionalInfo()));
-            return 1;
-        } catch (Exception e) {
-            source.sendError(Text.of("命令执行失败：" + e.getMessage()));
+    private static int nlpAction(CommandContext<ServerCommandSource> context) {
+        String input = StringArgumentType.getString(context, "text");
+        if (input.trim().equalsIgnoreCase("-help") || input.isBlank()) return help(context.getSource());
+        return submit(context.getSource(), input);
+    }
+
+    private static int submit(ServerCommandSource source, String input) {
+        if (source.getPlayer() == null) {
+            source.sendError(Text.of("Jarvis 只能由玩家执行。"));
             return 0;
         }
+        JarvisRuntime.applicationService().submit(com.promising.jarvis.core.context.CommandContext.from(
+                new CommandRequest(input), source));
+        return 1;
     }
 
-    private static String getCurrentPlayerInformation(ServerCommandSource source) {
-        // 玩家名称
-        String playerName = source.getName();
-
-        // 获取玩家的位置
-        BlockPos playerPosition = Objects.requireNonNull(source.getPlayer()).getBlockPos(); // 玩家位置
-        double posX = playerPosition.getX();
-        double posY = playerPosition.getY();
-        double posZ = playerPosition.getZ();
-
-        // 获取玩家的健康、饥饿和经验
-        float health = source.getPlayer().getHealth(); // 健康值
-        int foodLevel = source.getPlayer().getHungerManager().getFoodLevel(); // 饥饿值
-        int experience = source.getPlayer().experienceLevel; // 经验值
-
-        // 拼接信息为字符串
-        return String.format("\n姓名: %s \n坐标: (%.2f, %.2f, %.2f)\n健康值: %.1f\n饥饿值: %d\n经验值: %d",
-                playerName, posX, posY, posZ, health, foodLevel, experience);
+    private static int help(ServerCommandSource source) {
+        source.sendMessage(Text.of("=== Jarvis 智能命令行 ==="));
+        source.sendMessage(Text.of("用法：/nlp <你的自然语言请求>"));
+        source.sendMessage(Text.of("示例：/nlp 帮我把天气改成晴天"));
+        source.sendMessage(Text.of("示例：/nlp 制作附魔台需要什么材料"));
+        source.sendMessage(Text.of("记忆管理：/nl-memory status | /nl-memory clear"));
+        source.sendMessage(Text.of("陪伴目标：/nl-goal add <目标> | /nl-goal list | /nl-goal guide <目标ID>"));
+        source.sendMessage(Text.of("主动提醒：/nl-proactive on | off | status（默认关闭）"));
+        source.sendMessage(Text.of("要求：玩家权限等级 2；命令会受到游戏模式和安全策略限制。"));
+        source.sendMessage(Text.of("兼容入口：/nl <请求>"));
+        return 1;
     }
 }

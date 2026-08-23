@@ -2,11 +2,14 @@
 
 # Jarvis in Minecraft: Your Friendly AI Assistant  <img src="sources/image/Jarvis.png" alt="Jarvis in action" width="160" height="90" style="vertical-align: middle;"/>
 
-Welcome to **Jarvis** — the ultimate AI assistant for your Minecraft adventures! Inspired by Iron Man's trusty sidekick, we're here to make your blocky world more dynamic and help you conquer all your Minecraft challenges with style.
+Welcome to **Jarvis** — the ultimate AI assistant for your Minecraft adventures! 
+Inspired by Iron Man's trusty sidekick, we're here to make your blocky world more dynamic and help you conquer all your Minecraft challenges with style.
 
 ## 🌟 What is Jarvis?
 
-**Jarvis** is a Minecraft mod that leverages advanced AI-powered by a large language model to bring a whole new level of interactivity to your gameplay. Just type `/nl <natural language>` followed by your command and watch as Jarvis interprets your words and takes action. Whether you need to build a fortress, summon items, or pull off daring tricks, your AI assistant will have your back!
+**Jarvis** is a Minecraft mod that leverages advanced AI-powered by a large language model to bring a whole new level of interactivity to your gameplay. 
+Just type `/nl <natural language>` followed by your command and watch as Jarvis interprets your words and takes action.
+Whether you want to control the weather, time, or anything else, Jarvis will have your back!
 
 ## 🚀 Features
 
@@ -39,7 +42,7 @@ We welcome contributions! Feel free to fork the repo and submit pull requests. W
 
 ## 🙏 Acknowledgments
 
-- Big thanks to the incredible OpenAI and the community that makes AI accessible and exciting!
+- Big thanks to the incredible DeepSeek and the community that makes AI accessible and exciting!
 - Special shoutout to the Minecraft modding community for their endless inspiration and support.
 
 ## 🐛 Reporting Issues

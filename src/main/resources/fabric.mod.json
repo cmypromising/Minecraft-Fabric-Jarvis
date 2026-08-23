@@ -1,9 +1,9 @@
 {
 	"schemaVersion": 1,
-	"id": "fabric-jarvis",
+	"id": "jarvis",
 	"version": "${version}",
 	"name": "jarvis",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Jarvis is a Minecraft mod that leverages advanced AI-powered by a large language model to bring a whole new level of interactivity to your gameplay. Just type /nl <natural language> followed by your command and watch as Jarvis interprets your words and takes action. ",
 	"authors": [
 		"promising"
 	],
@@ -17,16 +17,10 @@
 		"main": [
 			"com.promising.jarvis.Jarvis"
 		],
-		"fabric-datagen": [
-			"com.promising.jarvis.JarvisDataGenerator"
-		],
-		"client": [
-			"com.promising.jarvis.JarvisDataClient"
+		"modmenu": [
+			"com.promising.jarvis.gui.ModMenuIntegration"
 		]
 	},
-	"mixins": [
-		"jarvis.mixins.json"
-	],
 	"depends": {
 		"fabricloader": ">=0.16.14",
 		"minecraft": "~1.21",

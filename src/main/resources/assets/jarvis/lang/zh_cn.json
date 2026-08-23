@@ -1,0 +1,25 @@
+{
+  "text.autoconfig.jarvis.title": "Jarvis 配置",
+  "text.autoconfig.jarvis.category.llm": "LLM",
+  "text.autoconfig.jarvis.category.api": "API",
+
+  "text.autoconfig.jarvis.option.deepSeekBaseUrl": "DeepSeek API 地址",
+  "text.autoconfig.jarvis.option.deepSeekBaseUrl.@Tooltip": "DeepSeek API 的基础 URL 地址",
+
+  "text.autoconfig.jarvis.option.connectionTimeoutSeconds": "连接超时时间",
+  "text.autoconfig.jarvis.option.connectionTimeoutSeconds.@Tooltip": "HTTP连接超时时间（秒）",
+
+  "text.autoconfig.jarvis.option.requestTimeoutSeconds": "请求超时时间",
+  "text.autoconfig.jarvis.option.requestTimeoutSeconds.@Tooltip": "HTTP请求超时时间（秒）",
+
+  "text.autoconfig.jarvis.option.temperatureInt": "创造性程度",
+  "text.autoconfig.jarvis.option.temperatureInt.@Tooltip": "LLM响应的创造性程度（0-200，对应0.0-2.0）",
+
+  "text.autoconfig.jarvis.option.maxTokens": "最大Token数",
+  "text.autoconfig.jarvis.option.maxTokens.@Tooltip": "LLM响应的最大Token数量",
+
+  "text.autoconfig.jarvis.option.deepSeekApiToken": "DeepSeek API Token",
+  "text.autoconfig.jarvis.option.deepSeekApiToken.@Tooltip": "DeepSeek API 的访问令牌（必需）",
+
+  "text.autoconfig.jarvis.option.systemPromptTemplate": "系统提示模板"
+}

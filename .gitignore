@@ -40,5 +40,6 @@ replay_*.log
 *.jfr
 
 # self
+logs
 sources/develop_document
 src/main/resources/.env

@@ -1,0 +1,95 @@
+package com.promising.jarvis.core;
+
+import com.promising.jarvis.core.application.DefaultJarvisApplicationService;
+import com.promising.jarvis.core.application.JarvisApplicationService;
+import com.promising.jarvis.core.agent.LlmAgent;
+import com.promising.jarvis.core.agent.SingleThreadLlmAgent;
+import com.promising.jarvis.core.context.ContextToolRegistries;
+import com.promising.jarvis.core.capability.CapabilityRegistry;
+import com.promising.jarvis.core.capability.impl.InformationalResponseCapability;
+import com.promising.jarvis.core.capability.impl.MinecraftCommandCapability;
+import com.promising.jarvis.core.parser.impl.DeepSeekParser;
+import com.promising.jarvis.core.memory.InMemoryMemoryStore;
+import com.promising.jarvis.core.memory.MemoryStore;
+import com.promising.jarvis.core.companion.CompanionGoalService;
+import com.promising.jarvis.core.companion.NotificationPolicy;
+import com.promising.jarvis.core.companion.ProactiveCompanionService;
+import com.promising.jarvis.core.observation.MinecraftPlayerStateObserver;
+import com.promising.jarvis.core.companion.JsonGoalStore;
+import com.promising.jarvis.core.companion.JsonNotificationPreferencesStore;
+import com.promising.jarvis.core.awareness.PlayerActivityTracker;
+import com.promising.jarvis.core.awareness.PlayerAwarenessService;
+import com.promising.jarvis.core.awareness.PlayerEventBus;
+import com.promising.jarvis.core.awareness.PlayerStateChangeDetector;
+
+/** Composition root for Jarvis application services and capabilities. */
+public final class JarvisRuntime {
+    private static JarvisApplicationService applicationService;
+    private static MemoryStore memoryStore;
+    private static LlmAgent llmAgent;
+    private static ProactiveCompanionService proactiveCompanion;
+    private static CompanionGoalService goalService;
+    private static PlayerAwarenessService awareness;
+    private static com.promising.jarvis.core.companion.ActiveAwarenessContextService activeAwareness;
+
+    private JarvisRuntime() {}
+
+    public static void initialize() {
+        CapabilityRegistry registry = new CapabilityRegistry()
+                .register(new MinecraftCommandCapability())
+                .register(new InformationalResponseCapability());
+        memoryStore = new InMemoryMemoryStore(8);
+        var dataDirectory = java.nio.file.Path.of("config", "jarvis");
+        var activityTracker = new PlayerActivityTracker();
+        var eventBus = new PlayerEventBus();
+        awareness = new PlayerAwarenessService(new MinecraftPlayerStateObserver(),
+                new PlayerStateChangeDetector(), eventBus, activityTracker);
+        activeAwareness = new com.promising.jarvis.core.companion.ActiveAwarenessContextService(
+                new MinecraftPlayerStateObserver(), new com.promising.jarvis.core.companion.MinecraftProactivePerception(), activityTracker);
+        var goalStore = new JsonGoalStore(dataDirectory.resolve("goals.json"));
+        goalService = new CompanionGoalService(goalStore);
+        proactiveCompanion = new ProactiveCompanionService(new NotificationPolicy(java.time.Clock.systemUTC(),
+                        new JsonNotificationPreferencesStore(dataDirectory.resolve("notification-preferences.json")),
+                new com.promising.jarvis.core.companion.JsonNotificationHistoryStore(dataDirectory.resolve("notification-history.json"))),
+                new com.promising.jarvis.core.companion.ProactiveLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker)), activeAwareness);
+        eventBus.subscribe(activeAwareness);
+        eventBus.subscribe(proactiveCompanion);
+        llmAgent = new SingleThreadLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker));
+        applicationService = new DefaultJarvisApplicationService(llmAgent, registry, memoryStore);
+    }
+
+    public static JarvisApplicationService applicationService() {
+        if (applicationService == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return applicationService;
+    }
+
+    public static MemoryStore memoryStore() {
+        if (memoryStore == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return memoryStore;
+    }
+
+    public static void shutdown() {
+        if (llmAgent != null) llmAgent.close();
+        if (proactiveCompanion != null) proactiveCompanion.close();
+    }
+
+    public static ProactiveCompanionService proactiveCompanion() {
+        if (proactiveCompanion == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return proactiveCompanion;
+    }
+
+    public static CompanionGoalService goalService() {
+        if (goalService == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return goalService;
+    }
+
+    public static PlayerAwarenessService awareness() {
+        if (awareness == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return awareness;
+    }
+
+    public static com.promising.jarvis.core.companion.ActiveAwarenessContextService activeAwareness() {
+        if (activeAwareness == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return activeAwareness;
+    }
+}
