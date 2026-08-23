@@ -52,3 +52,10 @@ P1 → P2 → P3 → P4 → P5 → P6. Each increment must pass tests, build, di
 - P4 complete: opt-in notification policy with cooldown, deduplication, quiet hours, and hourly limit.
 - P5 initial slice complete: low-frequency scheduler and `/nl-goal guide <id>` guidance loop; automatic command execution remains out of scope until explicit confirmation flow is added.
 - P6 pending: durable persistence, event-level triggers, notification history, and operational diagnostics.
+
+## P6 status
+
+- Versioned JSON goal persistence is stored under `config/jarvis/goals.json`.
+- Versioned JSON notification preferences are stored under `config/jarvis/notification-preferences.json`.
+- Stores use explicit schema validation and fail loudly on non-empty corrupt data.
+- Automatic command execution and durable notification history remain future work.
