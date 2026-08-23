@@ -29,7 +29,6 @@ public class ReActLlmAgentTest {
                 return response;
             }
 
-            public int getPriority() { return 0; }
         };
         ContextToolRegistry tools = new ContextToolRegistry().register(new ContextTool() {
             public String name() { return "test.fact"; }

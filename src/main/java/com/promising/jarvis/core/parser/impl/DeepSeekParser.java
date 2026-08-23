@@ -39,8 +39,4 @@ public class DeepSeekParser implements NLParser {
         }
     }
 
-    @Override
-    public int getPriority() {
-        return 0;
-    }
 }

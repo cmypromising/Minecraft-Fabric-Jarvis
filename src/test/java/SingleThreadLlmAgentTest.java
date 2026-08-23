@@ -22,7 +22,6 @@ public class SingleThreadLlmAgentTest {
                 return response;
             }
 
-            public int getPriority() { return 0; }
         };
 
         try (SingleThreadLlmAgent agent = new SingleThreadLlmAgent(parser, new ContextToolRegistry())) {

@@ -17,19 +17,10 @@
 		"main": [
 			"com.promising.jarvis.Jarvis"
 		],
-		"fabric-datagen": [
-			"com.promising.jarvis.JarvisDataGenerator"
-		],
-		"client": [
-			"com.promising.jarvis.JarvisDataClient"
-		],
 		"modmenu": [
 			"com.promising.jarvis.gui.ModMenuIntegration"
 		]
 	},
-	"mixins": [
-		"jarvis.mixins.json"
-	],
 	"depends": {
 		"fabricloader": ">=0.16.14",
 		"minecraft": "~1.21",
