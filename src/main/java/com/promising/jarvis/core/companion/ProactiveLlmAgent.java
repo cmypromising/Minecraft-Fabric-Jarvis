@@ -2,7 +2,6 @@ package com.promising.jarvis.core.companion;
 
 import com.promising.jarvis.core.agent.SingleThreadLlmAgent;
 import com.promising.jarvis.core.agent.task.AgentTask;
-import com.promising.jarvis.core.awareness.PlayerEvent;
 import com.promising.jarvis.core.command.CommandRequest;
 import com.promising.jarvis.core.context.CommandContext;
 import com.promising.jarvis.core.context.ContextToolRegistry;

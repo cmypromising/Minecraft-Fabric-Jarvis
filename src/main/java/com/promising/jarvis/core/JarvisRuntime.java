@@ -12,7 +12,6 @@ import com.promising.jarvis.core.parser.impl.DeepSeekParser;
 import com.promising.jarvis.core.memory.InMemoryMemoryStore;
 import com.promising.jarvis.core.memory.MemoryStore;
 import com.promising.jarvis.core.companion.CompanionGoalService;
-import com.promising.jarvis.core.companion.InMemoryGoalStore;
 import com.promising.jarvis.core.companion.NotificationPolicy;
 import com.promising.jarvis.core.companion.ProactiveCompanionService;
 import com.promising.jarvis.core.observation.MinecraftPlayerStateObserver;
@@ -46,9 +45,7 @@ public final class JarvisRuntime {
                 new PlayerStateChangeDetector(), eventBus, activityTracker);
         var goalStore = new JsonGoalStore(dataDirectory.resolve("goals.json"));
         goalService = new CompanionGoalService(goalStore);
-        proactiveCompanion = new ProactiveCompanionService(goalStore, new MinecraftPlayerStateObserver(),
-                new com.promising.jarvis.core.companion.RecommendationEngine(),
-                new NotificationPolicy(java.time.Clock.systemUTC(),
+        proactiveCompanion = new ProactiveCompanionService(new NotificationPolicy(java.time.Clock.systemUTC(),
                         new JsonNotificationPreferencesStore(dataDirectory.resolve("notification-preferences.json")),
                         new com.promising.jarvis.core.companion.JsonNotificationHistoryStore(dataDirectory.resolve("notification-history.json"))),
                 new com.promising.jarvis.core.companion.ProactiveLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker)));
