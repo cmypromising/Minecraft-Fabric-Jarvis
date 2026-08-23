@@ -55,7 +55,8 @@ public final class PlayerActivityTracker implements PlayerEventListener {
             case HEALTH_CHANGED, DEATH, RESPAWN -> PlayerActivity.COMBAT;
             case FOOD_CHANGED -> PlayerActivity.INVENTORY_MANAGEMENT;
             case JOINED, LEFT -> PlayerActivity.UNKNOWN;
-            case STATE_CHANGED -> PlayerActivity.UNKNOWN;
+            case STATE_CHANGED, ADVANCEMENT_COMPLETED, FIRST_JOIN, NIGHTFALL,
+                    HOSTILE_NEARBY, DANGER_DETECTED -> PlayerActivity.UNKNOWN;
         };
     }
 

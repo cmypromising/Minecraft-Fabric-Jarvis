@@ -45,6 +45,26 @@ public final class RecommendationEngine {
         return result;
     }
 
+    public List<Recommendation> evaluate(PlayerStateSnapshot state, List<CompanionGoal> goals,
+                                         ProactivePerception perception) {
+        List<Recommendation> result = new ArrayList<>(evaluate(state, goals));
+        if (state == null || perception == null) return result;
+        if (perception.danger()) {
+            result.add(new Recommendation(UUID.randomUUID(), state.playerId(), null, RecommendationPriority.CRITICAL,
+                    "危险环境提醒", "你当前处于危险环境，请优先寻找安全位置并处理生命、饥饿或附近敌对生物。",
+                    perception.evidence(), Instant.now(clock)));
+        } else if (perception.night()) {
+            result.add(new Recommendation(UUID.randomUUID(), state.playerId(), null, RecommendationPriority.NORMAL,
+                    "夜晚提醒", "现在已进入夜晚，建议回到庇护所、睡觉或确保周围有足够照明。",
+                    perception.evidence(), Instant.now(clock)));
+        } else if (goals.isEmpty() && "EARLY_SURVIVAL".equals(perception.gamePhase())) {
+            result.add(new Recommendation(UUID.randomUUID(), state.playerId(), null, RecommendationPriority.LOW,
+                    "阶段性生存建议", "你正处于生存早期，建议优先准备食物、基础工具和安全庇护所。",
+                    perception.evidence(), Instant.now(clock)));
+        }
+        return result;
+    }
+
     private static RecommendationPriority mapPriority(GoalPriority priority) {
         return switch (priority) {
             case LOW -> RecommendationPriority.LOW;

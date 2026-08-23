@@ -113,7 +113,7 @@ public final class CompanionCommandExecutor {
 
     private static int proactiveStatus(CommandContext<ServerCommandSource> context) {
         var preferences = JarvisRuntime.proactiveCompanion().policy().preferencesFor(context.getSource().getPlayer().getUuid());
-        context.getSource().sendFeedback(() -> Text.of("Jarvis：主动提醒 " + (preferences.proactiveEnabled() ? "已开启" : "未开启")
+        context.getSource().sendFeedback(() -> Text.of("Jarvis：主动提醒 " + (preferences.proactiveEnabled() ? "已开启（/nl-proactive on 后生效）" : "未开启（默认关闭，请执行 /nl-proactive on）")
                 + "，每小时上限 " + preferences.maxNotificationsPerHour() + " 条。"), false);
         return 1;
     }

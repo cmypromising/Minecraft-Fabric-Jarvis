@@ -41,8 +41,9 @@ public final class JarvisRuntime {
         memoryStore = new InMemoryMemoryStore(8);
         var dataDirectory = java.nio.file.Path.of("config", "jarvis");
         var activityTracker = new PlayerActivityTracker();
+        var eventBus = new PlayerEventBus();
         awareness = new PlayerAwarenessService(new MinecraftPlayerStateObserver(),
-                new PlayerStateChangeDetector(), new PlayerEventBus(), activityTracker);
+                new PlayerStateChangeDetector(), eventBus, activityTracker);
         var goalStore = new JsonGoalStore(dataDirectory.resolve("goals.json"));
         goalService = new CompanionGoalService(goalStore);
         proactiveCompanion = new ProactiveCompanionService(goalStore, new MinecraftPlayerStateObserver(),
@@ -50,6 +51,7 @@ public final class JarvisRuntime {
                 new NotificationPolicy(java.time.Clock.systemUTC(),
                         new JsonNotificationPreferencesStore(dataDirectory.resolve("notification-preferences.json")),
                         new com.promising.jarvis.core.companion.JsonNotificationHistoryStore(dataDirectory.resolve("notification-history.json"))));
+        eventBus.subscribe(proactiveCompanion);
         llmAgent = new SingleThreadLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker));
         applicationService = new DefaultJarvisApplicationService(llmAgent, registry, memoryStore);
     }

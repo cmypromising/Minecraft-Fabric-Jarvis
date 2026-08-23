@@ -39,6 +39,21 @@ public class RecommendationEngineTest {
         assertEquals("生存状态提醒", recommendations.getFirst().title());
     }
 
+    @Test
+    public void recommendsEarlyPhaseWithoutGoalAndDangerImmediately() {
+        UUID player = UUID.randomUUID();
+        var state = state(player, 20, 20, Map.of());
+        var early = new ProactivePerception("minecraft:plains", "minecraft:overworld", false,
+                false, false, "EARLY_SURVIVAL", List.of("缺少基础资源"));
+        assertEquals("阶段性生存建议", new RecommendationEngine(fixedClock())
+                .evaluate(state, List.of(), early).getFirst().title());
+
+        var danger = new ProactivePerception("minecraft:plains", "minecraft:overworld", false,
+                true, true, "EARLY_SURVIVAL", List.of("附近敌对生物"));
+        assertEquals("危险环境提醒", new RecommendationEngine(fixedClock())
+                .evaluate(state, List.of(), danger).getFirst().title());
+    }
+
     private static PlayerStateSnapshot state(UUID player, float health, int food, Map<String, Integer> resources) {
         return new PlayerStateSnapshot(player, "Alex", health, food, 1, 0, 64, 0,
                 "minecraft:overworld", Difficulty.NORMAL, GameMode.SURVIVAL, resources);
