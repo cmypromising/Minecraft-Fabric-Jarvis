@@ -19,6 +19,7 @@ public final class ProactiveCompanionService implements PlayerEventListener, Aut
     private final ProactiveLlmAgent proactiveAgent;
     private final Map<UUID, ProactiveEventWindow> windows = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> inFlight = new ConcurrentHashMap<>();
+    private final Map<UUID, String> submittedWindows = new ConcurrentHashMap<>();
     private MinecraftServer server;
 
     public ProactiveCompanionService(NotificationPolicy policy, ProactiveLlmAgent proactiveAgent) {
@@ -38,11 +39,18 @@ public final class ProactiveCompanionService implements PlayerEventListener, Aut
         UUID id = event.playerId();
         windows.computeIfAbsent(id, ignored -> new ProactiveEventWindow()).add(event);
         if (!policy.preferencesFor(id).proactiveEnabled() || inFlight.putIfAbsent(id, true) != null) return;
-        proactiveAgent.submit(player.getCommandSource(), id, windows.get(id).promptText(id), perception.observe(player))
+        String eventWindow = windows.get(id).promptText(id);
+        if (eventWindow.equals(submittedWindows.get(id))) {
+            inFlight.remove(id);
+            return;
+        }
+        submittedWindows.put(id, eventWindow);
+        proactiveAgent.submit(player.getCommandSource(), id, eventWindow, perception.observe(player))
                 .whenComplete((response, error) -> server.execute(() -> {
                     inFlight.remove(id);
                     if (error != null || response == null || response.getAdditionalInfo() == null
-                            || !"minecraft.information".equals(response.getCapability())) return;
+                            || !"minecraft.information".equals(response.getCapability())
+                            || Integer.valueOf(3).equals(response.getType())) return;
                     Recommendation recommendation = new Recommendation(UUID.randomUUID(), id, null,
                             RecommendationPriority.NORMAL, "主动陪伴建议", response.getAdditionalInfo(),
                             event.evidence(), Instant.now());

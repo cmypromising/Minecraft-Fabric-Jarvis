@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 /** Dedicated proactive ReAct agent. It never executes Minecraft commands. */
 public final class ProactiveLlmAgent implements AutoCloseable {
+    public static final int MAX_REASONING_STEPS = 6;
     private final SingleThreadLlmAgent agent;
 
     public ProactiveLlmAgent(NLParser parser, ContextToolRegistry tools) {
@@ -34,7 +35,7 @@ public final class ProactiveLlmAgent implements AutoCloseable {
                 PlayerContext.from(source), prompt);
         AgentTask task = AgentTask.builder(context).type("proactive.awareness")
                 .priority(com.promising.jarvis.core.agent.task.TaskPriority.LOW)
-                .timeout(Duration.ofSeconds(45)).maxReasoningSteps(3).build();
+                .timeout(Duration.ofSeconds(45)).maxReasoningSteps(MAX_REASONING_STEPS).build();
         return agent.submit(task).result();
     }
 
