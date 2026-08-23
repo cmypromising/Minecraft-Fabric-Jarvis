@@ -1,44 +1,31 @@
 package com.promising.jarvis.core.application;
 
 import com.promising.jarvis.Jarvis;
+import com.promising.jarvis.core.agent.LlmAgent;
 import com.promising.jarvis.core.capability.CapabilityRegistry;
 import com.promising.jarvis.core.context.CommandContext;
 import com.promising.jarvis.core.memory.MemoryStore;
 import com.promising.jarvis.core.memory.MemoryTurn;
-import com.promising.jarvis.core.parser.NLParser;
 import com.promising.jarvis.llm.deepseek.ContentResponseBody;
 import net.minecraft.text.Text;
 
-import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-
 /** Coordinates asynchronous parsing, memory, and capability dispatch. */
 public final class DefaultJarvisApplicationService implements JarvisApplicationService {
-    private final NLParser parser;
+    private final LlmAgent llmAgent;
     private final CapabilityRegistry capabilities;
     private final MemoryStore memory;
 
-    public DefaultJarvisApplicationService(NLParser parser, CapabilityRegistry capabilities, MemoryStore memory) {
-        this.parser = parser;
+    public DefaultJarvisApplicationService(LlmAgent llmAgent, CapabilityRegistry capabilities, MemoryStore memory) {
+        this.llmAgent = llmAgent;
         this.capabilities = capabilities;
         this.memory = memory;
     }
 
     public void submit(CommandContext context) {
         context.source().sendMessage(Text.of("Jarvis 正在处理请求…"));
-        CompletableFuture.supplyAsync(() -> parse(context))
+        String promptContext = context.selectedContext() + memory.promptFor(context.player().playerId());
+        llmAgent.submit(context, promptContext)
                 .whenComplete((response, error) -> context.source().getServer().execute(() -> complete(context, response, error)));
-    }
-
-    private ContentResponseBody parse(CommandContext context) {
-        try {
-            String promptContext = context.selectedContext()
-                    + memory.promptFor(context.player().playerId());
-            return parser.parse(context.request().text(), promptContext);
-        } catch (IOException exception) {
-            throw new CompletionException(exception);
-        }
     }
 
     private void complete(CommandContext context, ContentResponseBody response, Throwable error) {

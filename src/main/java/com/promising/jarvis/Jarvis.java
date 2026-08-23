@@ -4,6 +4,7 @@ import com.promising.jarvis.core.register.NLRegister;
 import com.promising.jarvis.core.register.NLRegisterFactory;
 import com.promising.jarvis.core.JarvisRuntime;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +24,12 @@ public class Jarvis implements ModInitializer {
 		// Proceed with mild caution.
 		ModConfig.init();
 		JarvisRuntime.initialize();
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> JarvisRuntime.shutdown());
 
 		for(NLRegister register : NLRegisterFactory.createRegisters()){
 			register.register();
 		}
 		LOGGER.info("Hello Fabric world!");
 	}
+
 }
