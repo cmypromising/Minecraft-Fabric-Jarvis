@@ -2,13 +2,15 @@ package com.promising.jarvis.core.context;
 
 import net.minecraft.server.command.ServerCommandSource;
 
+import java.util.UUID;
+
 /** Immutable player snapshot shared with services and language models. */
-public record PlayerContext(String playerName, int x, int y, int z, float health, int foodLevel, int experienceLevel) {
+public record PlayerContext(UUID playerId, String playerName, int x, int y, int z, float health, int foodLevel, int experienceLevel) {
     public static PlayerContext from(ServerCommandSource source) {
         if (source.getPlayer() == null) throw new IllegalArgumentException("A player context is required");
         var player = source.getPlayer();
         var position = player.getBlockPos();
-        return new PlayerContext(source.getName(), position.getX(), position.getY(), position.getZ(),
+        return new PlayerContext(player.getUuid(), source.getName(), position.getX(), position.getY(), position.getZ(),
                 player.getHealth(), player.getHungerManager().getFoodLevel(), player.experienceLevel);
     }
 

@@ -6,6 +6,8 @@ import com.promising.jarvis.core.capability.CapabilityRegistry;
 import com.promising.jarvis.core.capability.impl.InformationalResponseCapability;
 import com.promising.jarvis.core.capability.impl.MinecraftCommandCapability;
 import com.promising.jarvis.core.parser.impl.DeepSeekParser;
+import com.promising.jarvis.core.memory.InMemoryMemoryStore;
+import com.promising.jarvis.core.memory.MemoryStore;
 
 /** Composition root for Jarvis application services and capabilities. */
 public final class JarvisRuntime {
@@ -17,7 +19,8 @@ public final class JarvisRuntime {
         CapabilityRegistry registry = new CapabilityRegistry()
                 .register(new MinecraftCommandCapability())
                 .register(new InformationalResponseCapability());
-        applicationService = new DefaultJarvisApplicationService(new DeepSeekParser(), registry);
+        MemoryStore memory = new InMemoryMemoryStore(8);
+        applicationService = new DefaultJarvisApplicationService(new DeepSeekParser(), registry, memory);
     }
 
     public static JarvisApplicationService applicationService() {
