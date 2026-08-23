@@ -9,7 +9,11 @@ import net.minecraft.text.Text;
 /** Executes validated Minecraft commands returned by the model. */
 public final class MinecraftCommandCapability implements Capability {
     public String id() { return "minecraft.command"; }
-    public boolean supports(ContentResponseBody response) { return response != null && Integer.valueOf(1).equals(response.getType()); }
+    public boolean supports(ContentResponseBody response) {
+        return response != null && ("minecraft.command".equals(response.getCapability())
+                || (response.getCapability() == null || response.getCapability().isBlank())
+                && Integer.valueOf(1).equals(response.getType()));
+    }
     public void execute(CommandContext context, ContentResponseBody response) {
         if (!CommandSafetyPolicy.isAllowed(response.getCommand())) {
             context.source().sendError(Text.of("Jarvis 生成的命令未通过安全检查。"));

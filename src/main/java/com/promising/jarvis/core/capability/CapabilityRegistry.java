@@ -16,7 +16,11 @@ public final class CapabilityRegistry {
     }
 
     public boolean dispatch(CommandContext context, ContentResponseBody response) {
-        return capabilities.stream().filter(capability -> capability.supports(response)).findFirst()
+        boolean namedResponse = response != null && response.getCapability() != null && !response.getCapability().isBlank();
+        return capabilities.stream().filter(capability -> {
+                    if (namedResponse) return capability.id().equals(response.getCapability());
+                    return capability.supports(response);
+                }).findFirst()
                 .map(capability -> { capability.execute(context, response); return true; }).orElse(false);
     }
 

@@ -9,7 +9,9 @@ import net.minecraft.text.Text;
 public final class InformationalResponseCapability implements Capability {
     public String id() { return "minecraft.information"; }
     public boolean supports(ContentResponseBody response) {
-        return response != null && (Integer.valueOf(2).equals(response.getType()) || Integer.valueOf(3).equals(response.getType()));
+        return response != null && ("minecraft.information".equals(response.getCapability())
+                || (response.getCapability() == null || response.getCapability().isBlank())
+                && (Integer.valueOf(2).equals(response.getType()) || Integer.valueOf(3).equals(response.getType())));
     }
     public void execute(CommandContext context, ContentResponseBody response) {
         context.source().sendMessage(Text.of("Jarvis: " + response.getAdditionalInfo()));
