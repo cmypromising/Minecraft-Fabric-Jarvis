@@ -11,12 +11,19 @@ import com.promising.jarvis.core.capability.impl.MinecraftCommandCapability;
 import com.promising.jarvis.core.parser.impl.DeepSeekParser;
 import com.promising.jarvis.core.memory.InMemoryMemoryStore;
 import com.promising.jarvis.core.memory.MemoryStore;
+import com.promising.jarvis.core.companion.CompanionGoalService;
+import com.promising.jarvis.core.companion.InMemoryGoalStore;
+import com.promising.jarvis.core.companion.NotificationPolicy;
+import com.promising.jarvis.core.companion.ProactiveCompanionService;
+import com.promising.jarvis.core.observation.MinecraftPlayerStateObserver;
 
 /** Composition root for Jarvis application services and capabilities. */
 public final class JarvisRuntime {
     private static JarvisApplicationService applicationService;
     private static MemoryStore memoryStore;
     private static LlmAgent llmAgent;
+    private static ProactiveCompanionService proactiveCompanion;
+    private static CompanionGoalService goalService;
 
     private JarvisRuntime() {}
 
@@ -25,6 +32,10 @@ public final class JarvisRuntime {
                 .register(new MinecraftCommandCapability())
                 .register(new InformationalResponseCapability());
         memoryStore = new InMemoryMemoryStore(8);
+        var goalStore = new InMemoryGoalStore();
+        goalService = new CompanionGoalService(goalStore);
+        proactiveCompanion = new ProactiveCompanionService(goalStore, new MinecraftPlayerStateObserver(),
+                new com.promising.jarvis.core.companion.RecommendationEngine(), new NotificationPolicy());
         llmAgent = new SingleThreadLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults());
         applicationService = new DefaultJarvisApplicationService(llmAgent, registry, memoryStore);
     }
@@ -41,5 +52,15 @@ public final class JarvisRuntime {
 
     public static void shutdown() {
         if (llmAgent != null) llmAgent.close();
+    }
+
+    public static ProactiveCompanionService proactiveCompanion() {
+        if (proactiveCompanion == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return proactiveCompanion;
+    }
+
+    public static CompanionGoalService goalService() {
+        if (goalService == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return goalService;
     }
 }
