@@ -26,7 +26,10 @@ public class Jarvis implements ModInitializer {
 		ModConfig.init();
 		JarvisRuntime.initialize();
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> JarvisRuntime.shutdown());
-		ServerTickEvents.END_SERVER_TICK.register(server -> JarvisRuntime.proactiveCompanion().tick(server));
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			JarvisRuntime.awareness().tick(server);
+			JarvisRuntime.proactiveCompanion().tick(server);
+		});
 
 		for(NLRegister register : NLRegisterFactory.createRegisters()){
 			register.register();
