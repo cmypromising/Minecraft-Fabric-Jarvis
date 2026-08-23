@@ -2,6 +2,7 @@ package com.promising.jarvis;
 
 import com.promising.jarvis.core.register.NLRegister;
 import com.promising.jarvis.core.register.NLRegisterFactory;
+import com.promising.jarvis.core.JarvisRuntime;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ public class Jarvis implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 		ModConfig.init();
+		JarvisRuntime.initialize();
 
 		for(NLRegister register : NLRegisterFactory.createRegisters()){
 			register.register();

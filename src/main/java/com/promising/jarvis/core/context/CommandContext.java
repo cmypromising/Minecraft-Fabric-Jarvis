@@ -1,0 +1,11 @@
+package com.promising.jarvis.core.context;
+
+import com.promising.jarvis.core.command.CommandRequest;
+import net.minecraft.server.command.ServerCommandSource;
+
+/** Execution context shared by all intelligent command-line capabilities. */
+public record CommandContext(CommandRequest request, ServerCommandSource source, PlayerContext player) {
+    public static CommandContext from(CommandRequest request, ServerCommandSource source) {
+        return new CommandContext(request, source, PlayerContext.from(source));
+    }
+}
