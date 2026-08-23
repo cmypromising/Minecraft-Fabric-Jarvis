@@ -33,7 +33,9 @@ public final class DefaultJarvisApplicationService implements JarvisApplicationS
 
     private ContentResponseBody parse(CommandContext context) {
         try {
-            String promptContext = context.player().asPromptText() + memory.promptFor(context.player().playerId());
+            String promptContext = context.player().asPromptText()
+                    + context.worldInfo()
+                    + memory.promptFor(context.player().playerId());
             return parser.parse(context.request().text(), promptContext);
         } catch (IOException exception) {
             throw new CompletionException(exception);
