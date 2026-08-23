@@ -1,6 +1,7 @@
 import com.promising.jarvis.core.agent.SingleThreadLlmAgent;
 import com.promising.jarvis.core.command.CommandRequest;
 import com.promising.jarvis.core.context.CommandContext;
+import com.promising.jarvis.core.context.ContextToolRegistry;
 import com.promising.jarvis.core.parser.NLParser;
 import com.promising.jarvis.llm.deepseek.ContentResponseBody;
 import org.junit.Test;
@@ -24,7 +25,7 @@ public class SingleThreadLlmAgentTest {
             public int getPriority() { return 0; }
         };
 
-        try (SingleThreadLlmAgent agent = new SingleThreadLlmAgent(parser)) {
+        try (SingleThreadLlmAgent agent = new SingleThreadLlmAgent(parser, new ContextToolRegistry())) {
             ContentResponseBody response = agent.submit(
                     new CommandContext(new CommandRequest("hello"), null, null, ""), "facts")
                     .get(2, TimeUnit.SECONDS);

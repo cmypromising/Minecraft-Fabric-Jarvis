@@ -4,6 +4,7 @@ import com.promising.jarvis.core.application.DefaultJarvisApplicationService;
 import com.promising.jarvis.core.application.JarvisApplicationService;
 import com.promising.jarvis.core.agent.LlmAgent;
 import com.promising.jarvis.core.agent.SingleThreadLlmAgent;
+import com.promising.jarvis.core.context.ContextToolRegistries;
 import com.promising.jarvis.core.capability.CapabilityRegistry;
 import com.promising.jarvis.core.capability.impl.InformationalResponseCapability;
 import com.promising.jarvis.core.capability.impl.MinecraftCommandCapability;
@@ -24,7 +25,7 @@ public final class JarvisRuntime {
                 .register(new MinecraftCommandCapability())
                 .register(new InformationalResponseCapability());
         memoryStore = new InMemoryMemoryStore(8);
-        llmAgent = new SingleThreadLlmAgent(new DeepSeekParser());
+        llmAgent = new SingleThreadLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults());
         applicationService = new DefaultJarvisApplicationService(llmAgent, registry, memoryStore);
     }
 

@@ -41,6 +41,11 @@ public class DeepSeekLLMClient implements LLMClient {
 
         DeepSeekRequestBody requestBody = DeepSeekRequestBody.builder()
                 .addSystemPrompt("minecraft_assistant")
+                .addSystemMessage("ReAct 上下文协议：当缺少实时 Minecraft 事实时，先输出严格 JSON "
+                        + "{\"capability\":\"context.tool\",\"tool\":\"工具名\",\"tool_arguments\":\"参数\","
+                        + "\"type\":3,\"command\":\"\",\"additional_info\":\"\"}。"
+                        + "工具只能从用户消息列出的只读上下文工具中选择。收到工具结果后，再输出最终的 "
+                        + "minecraft.command 或 minecraft.information JSON。若已有足够事实，直接输出最终 JSON。")
                 .addUserMessage(formattedMessage)
                 .setTemperature(ModConfig.INSTANCE.getTemperature())
                 .setMaxTokens(ModConfig.INSTANCE.maxTokens)
