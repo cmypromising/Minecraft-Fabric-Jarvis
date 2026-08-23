@@ -39,6 +39,8 @@ public final class CompanionGoalService {
 
     public boolean remove(UUID playerId, UUID goalId) { return store.remove(playerId, goalId); }
 
+    public CompanionGoal get(UUID playerId, UUID goalId) { return find(playerId, goalId); }
+
     private CompanionGoal find(UUID playerId, UUID goalId) {
         return store.findByPlayer(playerId).stream().filter(goal -> goal.id().equals(goalId)).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + goalId));

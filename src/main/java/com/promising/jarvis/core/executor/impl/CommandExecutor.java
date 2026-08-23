@@ -51,6 +51,8 @@ public final class CommandExecutor {
         source.sendMessage(Text.of("示例：/nlp 帮我把天气改成晴天"));
         source.sendMessage(Text.of("示例：/nlp 制作附魔台需要什么材料"));
         source.sendMessage(Text.of("记忆管理：/nl-memory status | /nl-memory clear"));
+        source.sendMessage(Text.of("陪伴目标：/nl-goal add <目标> | /nl-goal list | /nl-goal guide <目标ID>"));
+        source.sendMessage(Text.of("主动提醒：/nl-proactive on | off | status（默认关闭）"));
         source.sendMessage(Text.of("要求：玩家权限等级 2；命令会受到游戏模式和安全策略限制。"));
         source.sendMessage(Text.of("兼容入口：/nl <请求>"));
         return 1;

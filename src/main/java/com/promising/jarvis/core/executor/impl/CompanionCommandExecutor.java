@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.promising.jarvis.core.JarvisRuntime;
+import com.promising.jarvis.core.command.CommandRequest;
 import com.promising.jarvis.core.companion.GoalPriority;
 import com.promising.jarvis.core.companion.GoalStatus;
 import net.minecraft.server.command.CommandManager;
@@ -27,6 +28,8 @@ public final class CompanionCommandExecutor {
                         .executes(context -> setStatus(context, GoalStatus.ACTIVE))))
                 .then(CommandManager.literal("complete").then(CommandManager.argument("id", StringArgumentType.word())
                         .executes(context -> setStatus(context, GoalStatus.COMPLETED))))
+                .then(CommandManager.literal("guide").then(CommandManager.argument("id", StringArgumentType.word())
+                        .executes(CompanionCommandExecutor::guideGoal)))
                 .then(CommandManager.literal("remove").then(CommandManager.argument("id", StringArgumentType.word())
                         .executes(CompanionCommandExecutor::removeGoal))));
 
@@ -77,6 +80,25 @@ public final class CompanionCommandExecutor {
         if (removed) context.getSource().sendFeedback(() -> Text.of("Jarvis：目标已移除。"), false);
         else context.getSource().sendError(Text.of("Jarvis：目标 ID 无效或目标不存在。"));
         return removed ? 1 : 0;
+    }
+
+    private static int guideGoal(CommandContext<ServerCommandSource> context) {
+        var player = context.getSource().getPlayer();
+        try {
+            var goal = JarvisRuntime.goalService().get(player.getUuid(), java.util.UUID.fromString(
+                    StringArgumentType.getString(context, "id")));
+            String prompt = "请作为 Minecraft 陪伴助手，为玩家制定完成目标的分步指导。"
+                    + "只提供说明、所需资源、风险和下一步建议，不要声称已经执行任何操作。"
+                    + "目标标题: " + goal.title() + "；目标描述: " + goal.description()
+                    + "；目标优先级: " + goal.priority() + "；目标资源: " + goal.targetItemId()
+                    + "；目标数量: " + goal.targetCount();
+            JarvisRuntime.applicationService().submit(com.promising.jarvis.core.context.CommandContext.from(
+                    new CommandRequest(prompt), context.getSource()));
+            return 1;
+        } catch (IllegalArgumentException exception) {
+            context.getSource().sendError(Text.of("Jarvis：目标 ID 无效或目标不存在。"));
+            return 0;
+        }
     }
 
     private static int setProactive(CommandContext<ServerCommandSource> context, boolean enabled) {

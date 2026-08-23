@@ -43,3 +43,12 @@ Persist goals, preferences, notification history, and schema versions. Add statu
 ## Delivery order
 
 P1 → P2 → P3 → P4 → P5 → P6. Each increment must pass tests, build, diff checks, and an independent safety review before merging to `dev`.
+
+## Current delivery status
+
+- P1 complete: immutable player state and bounded inventory observation.
+- P2 complete: in-memory companion goal lifecycle and player goal commands.
+- P3 complete: deterministic evidence-backed recommendation engine.
+- P4 complete: opt-in notification policy with cooldown, deduplication, quiet hours, and hourly limit.
+- P5 initial slice complete: low-frequency scheduler and `/nl-goal guide <id>` guidance loop; automatic command execution remains out of scope until explicit confirmation flow is added.
+- P6 pending: durable persistence, event-level triggers, notification history, and operational diagnostics.
