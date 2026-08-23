@@ -13,7 +13,8 @@ public final class ContextToolRegistries {
                 .register(componentTool("world.location", "当前玩家所在维度和方块坐标", new LocationComponent()))
                 .register(componentTool("world.time_weather", "当前世界时间、降雨和雷暴状态", new TimeWeatherComponent()))
                 .register(componentTool("world.rules", "当前世界难度和玩家游戏模式", new DifficultyComponent()))
-                .register(componentTool("player.status", "当前玩家生命、饥饿和经验等级", new PlayerStatusComponent()));
+                .register(componentTool("player.status", "当前玩家生命、饥饿和经验等级", new PlayerStatusComponent()))
+                .register(new PlayerResourcesContextTool());
     }
 
     private static ContextTool componentTool(String name, String description, ContextComponent component) {
