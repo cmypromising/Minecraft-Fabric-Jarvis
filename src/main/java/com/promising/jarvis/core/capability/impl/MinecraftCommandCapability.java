@@ -15,7 +15,7 @@ public final class MinecraftCommandCapability implements Capability {
                 && Integer.valueOf(1).equals(response.getType()));
     }
     public void execute(CommandContext context, ContentResponseBody response) {
-        if (!CommandSafetyPolicy.isAllowed(response.getCommand())) {
+        if (!CommandSafetyPolicy.isAllowed(response.getCommand(), context.player())) {
             context.source().sendError(Text.of("Jarvis 生成的命令未通过安全检查。"));
             return;
         }
