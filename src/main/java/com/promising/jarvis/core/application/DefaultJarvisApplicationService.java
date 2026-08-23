@@ -24,6 +24,7 @@ public final class DefaultJarvisApplicationService implements JarvisApplicationS
     public void submit(CommandContext context) {
         context.source().sendMessage(Text.of("Jarvis 正在处理请求…"));
         String promptContext = context.selectedContext() + memory.promptFor(context.player().playerId());
+        Jarvis.LOGGER.debug("Selected context for '{}': {}", context.request().text(), promptContext);
         llmAgent.submit(context, promptContext)
                 .whenComplete((response, error) -> context.source().getServer().execute(() -> complete(context, response, error)));
     }
