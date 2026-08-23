@@ -12,6 +12,7 @@ import com.promising.jarvis.core.memory.MemoryStore;
 /** Composition root for Jarvis application services and capabilities. */
 public final class JarvisRuntime {
     private static JarvisApplicationService applicationService;
+    private static MemoryStore memoryStore;
 
     private JarvisRuntime() {}
 
@@ -19,12 +20,17 @@ public final class JarvisRuntime {
         CapabilityRegistry registry = new CapabilityRegistry()
                 .register(new MinecraftCommandCapability())
                 .register(new InformationalResponseCapability());
-        MemoryStore memory = new InMemoryMemoryStore(8);
-        applicationService = new DefaultJarvisApplicationService(new DeepSeekParser(), registry, memory);
+        memoryStore = new InMemoryMemoryStore(8);
+        applicationService = new DefaultJarvisApplicationService(new DeepSeekParser(), registry, memoryStore);
     }
 
     public static JarvisApplicationService applicationService() {
         if (applicationService == null) throw new IllegalStateException("Jarvis runtime is not initialized");
         return applicationService;
+    }
+
+    public static MemoryStore memoryStore() {
+        if (memoryStore == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return memoryStore;
     }
 }

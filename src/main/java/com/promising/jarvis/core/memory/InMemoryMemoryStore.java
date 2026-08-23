@@ -17,6 +17,7 @@ public final class InMemoryMemoryStore implements MemoryStore {
     }
 
     public List<MemoryTurn> recent(UUID playerId) { return memoryFor(playerId).snapshot(); }
+    public int size(UUID playerId) { return memoryFor(playerId).snapshot().size(); }
     public String promptFor(UUID playerId) { return memoryFor(playerId).asPromptText(); }
     public void append(UUID playerId, MemoryTurn turn) { memoryFor(playerId).append(turn); }
     public void clear(UUID playerId) { memories.remove(playerId); }
