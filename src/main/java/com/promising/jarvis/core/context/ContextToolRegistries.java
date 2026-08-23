@@ -4,6 +4,9 @@ import com.promising.jarvis.core.world.DifficultyComponent;
 import com.promising.jarvis.core.world.LocationComponent;
 import com.promising.jarvis.core.world.TimeWeatherComponent;
 import com.promising.jarvis.core.awareness.PlayerActivityTracker;
+import com.promising.jarvis.core.perception.GamePhaseContextTool;
+import com.promising.jarvis.core.perception.NearbyEntitiesContextTool;
+import com.promising.jarvis.core.perception.WorldEnvironmentContextTool;
 
 /** Composition root for the built-in read-only context tools. */
 public final class ContextToolRegistries {
@@ -20,7 +23,10 @@ public final class ContextToolRegistries {
                 .register(componentTool("world.rules", "当前世界难度和玩家游戏模式", new DifficultyComponent()))
                 .register(componentTool("player.status", "当前玩家生命、饥饿和经验等级", new PlayerStatusComponent()))
                 .register(new PlayerResourcesContextTool())
-                .register(new PlayerActivityContextTool(activityTracker));
+                .register(new PlayerActivityContextTool(activityTracker))
+                .register(new WorldEnvironmentContextTool())
+                .register(new NearbyEntitiesContextTool())
+                .register(new GamePhaseContextTool());
     }
 
     private static ContextTool componentTool(String name, String description, ContextComponent component) {
