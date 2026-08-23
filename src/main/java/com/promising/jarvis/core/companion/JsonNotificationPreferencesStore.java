@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Map;
@@ -67,7 +69,13 @@ public final class JsonNotificationPreferencesStore implements NotificationPrefe
                 players.add(id.toString(), json);
             });
             root.add("players", players);
-            Files.writeString(file, new GsonBuilder().setPrettyPrinting().create().toJson(root), StandardCharsets.UTF_8);
+            Path temp = file.resolveSibling(file.getFileName() + ".tmp");
+            Files.writeString(temp, new GsonBuilder().setPrettyPrinting().create().toJson(root), StandardCharsets.UTF_8);
+            try {
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException exception) { throw new IllegalStateException("Cannot persist notification preferences: " + file, exception); }
     }
 }

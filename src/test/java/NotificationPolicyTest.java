@@ -32,4 +32,15 @@ public class NotificationPolicyTest {
                 LocalTime.of(23, 0), LocalTime.of(7, 0)));
         assertFalse(policy.decide(RECOMMENDATION).allowed());
     }
+
+    @Test
+    public void enforcesHourlyLimit() {
+        Clock clock = Clock.fixed(Instant.parse("2026-01-01T12:00:00Z"), ZoneOffset.UTC);
+        var policy = new NotificationPolicy(clock);
+        policy.setPreferences(PLAYER, new NotificationPreferences(true, Duration.ofSeconds(1), 1,
+                LocalTime.of(23, 0), LocalTime.of(7, 0)));
+        assertTrue(policy.decide(RECOMMENDATION).allowed());
+        assertFalse(policy.decide(new Recommendation(UUID.randomUUID(), PLAYER, UUID.randomUUID(),
+                RecommendationPriority.HIGH, "另一个提醒", "请注意", List.of("evidence"), Instant.EPOCH)).allowed());
+    }
 }

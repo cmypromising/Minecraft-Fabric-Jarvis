@@ -29,7 +29,12 @@ public final class CompanionGoalService {
 
     public CompanionGoal setStatus(UUID playerId, UUID goalId, GoalStatus status) {
         CompanionGoal goal = find(playerId, goalId);
-        if (goal.status() == GoalStatus.ARCHIVED) throw new IllegalStateException("Archived goal cannot change");
+        if (goal.status() == GoalStatus.ARCHIVED || goal.status() == GoalStatus.COMPLETED) {
+            throw new IllegalStateException("Terminal goal cannot change");
+        }
+        if (status == GoalStatus.ARCHIVED && goal.status() != GoalStatus.COMPLETED) {
+            throw new IllegalArgumentException("Only completed goals can be archived");
+        }
         return store.save(goal.withStatus(status, Instant.now(clock)));
     }
 

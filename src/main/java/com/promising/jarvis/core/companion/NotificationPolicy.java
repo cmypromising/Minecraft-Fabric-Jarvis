@@ -11,16 +11,21 @@ import java.util.UUID;
 public final class NotificationPolicy {
     private final Clock clock;
     private final NotificationPreferencesStore preferenceStore;
+    private final NotificationHistoryStore historyStore;
     private final Map<UUID, NotificationPreferences> preferences = new HashMap<>();
     private final Map<NotificationKey, Instant> lastSent = new HashMap<>();
     private final Map<UUID, Integer> hourlyCount = new HashMap<>();
     private final Map<UUID, String> hourlyBucket = new HashMap<>();
 
-    public NotificationPolicy() { this(Clock.systemUTC(), null); }
-    public NotificationPolicy(Clock clock) { this(clock, null); }
+    public NotificationPolicy() { this(Clock.systemUTC(), null, null); }
+    public NotificationPolicy(Clock clock) { this(clock, null, null); }
     public NotificationPolicy(Clock clock, NotificationPreferencesStore preferenceStore) {
+        this(clock, preferenceStore, null);
+    }
+    public NotificationPolicy(Clock clock, NotificationPreferencesStore preferenceStore, NotificationHistoryStore historyStore) {
         this.clock = clock;
         this.preferenceStore = preferenceStore;
+        this.historyStore = historyStore;
     }
 
     public synchronized void setPreferences(UUID playerId, NotificationPreferences value) {
@@ -51,11 +56,16 @@ public final class NotificationPolicy {
             return NotificationDecision.deny("hourly notification limit reached");
         }
         NotificationKey key = new NotificationKey(playerId, recommendation.goalId(), recommendation.title());
+        String historyKey = key.toString();
         Instant previous = lastSent.get(key);
+        if (previous == null && historyStore != null) {
+            previous = historyStore.find(historyKey).map(NotificationHistory::sentAt).orElse(null);
+        }
         if (previous != null && previous.plus(policy.cooldown()).isAfter(Instant.now(clock))) {
             return NotificationDecision.deny("recommendation cooldown");
         }
         lastSent.put(key, Instant.now(clock));
+        if (historyStore != null) historyStore.save(historyKey, new NotificationHistory(Instant.now(clock), bucket));
         hourlyCount.merge(playerId, 1, Integer::sum);
         return NotificationDecision.allow();
     }

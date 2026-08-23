@@ -24,6 +24,7 @@ public final class ProactiveCompanionService {
 
     /** Must be called from the Minecraft server thread. */
     public void tick(MinecraftServer server) {
+        if (server == null) return;
         if (++ticks % SAMPLE_INTERVAL_TICKS != 0) return;
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
             observer.observe(player.getCommandSource()).ifPresent(snapshot -> {

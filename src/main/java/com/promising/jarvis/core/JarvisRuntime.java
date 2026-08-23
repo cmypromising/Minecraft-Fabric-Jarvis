@@ -40,7 +40,8 @@ public final class JarvisRuntime {
         proactiveCompanion = new ProactiveCompanionService(goalStore, new MinecraftPlayerStateObserver(),
                 new com.promising.jarvis.core.companion.RecommendationEngine(),
                 new NotificationPolicy(java.time.Clock.systemUTC(),
-                        new JsonNotificationPreferencesStore(dataDirectory.resolve("notification-preferences.json"))));
+                        new JsonNotificationPreferencesStore(dataDirectory.resolve("notification-preferences.json")),
+                        new com.promising.jarvis.core.companion.JsonNotificationHistoryStore(dataDirectory.resolve("notification-history.json"))));
         llmAgent = new SingleThreadLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults());
         applicationService = new DefaultJarvisApplicationService(llmAgent, registry, memoryStore);
     }

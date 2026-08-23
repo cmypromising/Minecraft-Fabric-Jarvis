@@ -6,6 +6,7 @@ import net.minecraft.server.command.ServerCommandSource;
 
 /** Read-only context tool exposing aggregated inventory resources on demand. */
 public final class PlayerResourcesContextTool implements ContextTool {
+    private static final int MAX_OUTPUT_LENGTH = 3000;
     private final MinecraftPlayerStateObserver observer = new MinecraftPlayerStateObserver();
 
     public String name() { return "player.resources"; }
@@ -20,8 +21,11 @@ public final class PlayerResourcesContextTool implements ContextTool {
     private static String format(PlayerStateSnapshot snapshot) {
         if (snapshot.resources().isEmpty()) return "[玩家资源] 背包为空";
         StringBuilder result = new StringBuilder("[玩家资源]");
-        snapshot.resources().entrySet().stream().sorted(java.util.Map.Entry.comparingByKey())
-                .forEach(entry -> result.append('\n').append(entry.getKey()).append(": ").append(entry.getValue()));
+        for (var entry : snapshot.resources().entrySet().stream().sorted(java.util.Map.Entry.comparingByKey()).toList()) {
+            String line = "\n" + entry.getKey() + ": " + entry.getValue();
+            if (result.length() + line.length() > MAX_OUTPUT_LENGTH) break;
+            result.append(line);
+        }
         return result.toString();
     }
 }

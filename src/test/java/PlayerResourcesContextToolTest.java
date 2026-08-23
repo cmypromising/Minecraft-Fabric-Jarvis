@@ -9,4 +9,9 @@ public class PlayerResourcesContextToolTest {
         String result = new PlayerResourcesContextTool().execute(null, "");
         assertTrue(result.contains("无法获取当前玩家资源"));
     }
+
+    @Test
+    public void hasBoundedOutputContract() {
+        assertTrue(new PlayerResourcesContextTool().execute(null, "").length() < 3000);
+    }
 }

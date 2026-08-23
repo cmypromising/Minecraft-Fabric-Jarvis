@@ -36,4 +36,11 @@ public class CompanionGoalServiceTest {
     public void targetCountRequiresTargetItem() {
         service.create(PLAYER, "收集", "", GoalPriority.NORMAL, null, 4, true);
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void completedGoalIsTerminal() {
+        CompanionGoal goal = service.create(PLAYER, "完成", "", GoalPriority.NORMAL, null, 0, true);
+        service.setStatus(PLAYER, goal.id(), GoalStatus.COMPLETED);
+        service.setStatus(PLAYER, goal.id(), GoalStatus.ACTIVE);
+    }
 }
