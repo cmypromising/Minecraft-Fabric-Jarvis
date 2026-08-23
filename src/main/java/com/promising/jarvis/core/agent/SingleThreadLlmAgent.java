@@ -1,22 +1,22 @@
 package com.promising.jarvis.core.agent;
 
-import com.promising.jarvis.core.context.CommandContext;
 import com.promising.jarvis.core.context.ContextToolRegistry;
+import com.promising.jarvis.core.context.CommandContext;
+import com.promising.jarvis.core.agent.task.AgentTask;
 import com.promising.jarvis.core.parser.NLParser;
 import com.promising.jarvis.llm.deepseek.ContentResponseBody;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /** Serializes LLM calls on one named, daemon worker thread. */
 public final class SingleThreadLlmAgent implements LlmAgent {
     private static final int QUEUE_CAPACITY = 32;
-    private static final int MAX_REACT_STEPS = 4;
     private final NLParser parser;
     private final ContextToolRegistry tools;
-    private final BlockingQueue<Task> queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
+    private final BlockingQueue<AgentTask> queue = new PriorityBlockingQueue<>();
     private final Thread worker;
     private volatile boolean running = true;
 
@@ -29,27 +29,32 @@ public final class SingleThreadLlmAgent implements LlmAgent {
     }
 
     @Override
-    public CompletableFuture<ContentResponseBody> submit(CommandContext context, String promptContext) {
-        CompletableFuture<ContentResponseBody> result = new CompletableFuture<>();
+    public AgentTask submit(AgentTask task) {
+        CompletableFuture<ContentResponseBody> result = task.result();
         if (!running) {
-            result.completeExceptionally(new IllegalStateException("LLM agent is stopped"));
-            return result;
+            task.cancel();
+            return task;
         }
-        if (!queue.offer(new Task(context, promptContext, result))) {
-            result.completeExceptionally(new IllegalStateException("LLM agent queue is full"));
+        if (queue.size() >= QUEUE_CAPACITY || !queue.offer(task)) {
+            task.cancel();
         }
-        return result;
+        return task;
     }
 
     private void runLoop() {
         while (running || !queue.isEmpty()) {
             try {
-                Task task = queue.poll(250, TimeUnit.MILLISECONDS);
+                AgentTask task = queue.poll(250, TimeUnit.MILLISECONDS);
                 if (task == null) continue;
+                if (task.isExpired()) {
+                    task.expire();
+                    continue;
+                }
+                if (!task.start()) continue;
                 try {
-                    task.result.complete(runReasoningLoop(task));
+                    task.succeed(runReasoningLoop(task));
                 } catch (Throwable error) {
-                    task.result.completeExceptionally(error);
+                    task.fail(error);
                 }
             } catch (InterruptedException ignored) {
                 if (!running) Thread.currentThread().interrupt();
@@ -57,17 +62,21 @@ public final class SingleThreadLlmAgent implements LlmAgent {
         }
     }
 
-    private ContentResponseBody runReasoningLoop(Task task) throws Exception {
-        String context = task.promptContext;
-        for (int step = 0; step < MAX_REACT_STEPS; step++) {
-            ContentResponseBody response = parser.parse(task.context.request().text(),
+    private ContentResponseBody runReasoningLoop(AgentTask task) throws Exception {
+        String context = task.promptContext();
+        for (int step = 0; step < task.maxReasoningSteps(); step++) {
+            if (task.isExpired()) {
+                task.expire();
+                throw new IllegalStateException("Agent task expired: " + task.id());
+            }
+            ContentResponseBody response = parser.parse(task.context().request().text(),
                     context + "\n\n可用上下文工具（只读）：\n" + tools.describe()
                             + "\n如果需要事实，请返回 capability=context.tool、tool=工具名、tool_arguments=参数；"
                             + "获取工具结果后再返回最终 minecraft.command 或 minecraft.information 响应。"
-                            + "最多调用工具 " + MAX_REACT_STEPS + " 次。");
+                            + "最多调用工具 " + task.maxReasoningSteps() + " 次。");
             if (response == null || !response.isContextToolRequest()) return response;
 
-            String toolResult = executeToolOnMinecraftThread(task.context, response.getTool(), response.getToolArguments());
+            String toolResult = executeToolOnMinecraftThread(task.context(), response.getTool(), response.getToolArguments());
             context += "\n\n工具调用结果 [" + response.getTool() + "]: " + toolResult;
         }
         throw new IllegalStateException("LLM agent exceeded the context tool step limit");
@@ -93,6 +102,8 @@ public final class SingleThreadLlmAgent implements LlmAgent {
     public void close() {
         running = false;
         worker.interrupt();
+        queue.forEach(AgentTask::cancel);
+        queue.clear();
         if (Thread.currentThread() != worker) {
             try {
                 worker.join(2000);
@@ -102,6 +113,4 @@ public final class SingleThreadLlmAgent implements LlmAgent {
         }
     }
 
-    private record Task(CommandContext context, String promptContext,
-                        CompletableFuture<ContentResponseBody> result) { }
 }

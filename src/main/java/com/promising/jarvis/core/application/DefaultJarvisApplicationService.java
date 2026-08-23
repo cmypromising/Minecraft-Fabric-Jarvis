@@ -2,6 +2,7 @@ package com.promising.jarvis.core.application;
 
 import com.promising.jarvis.Jarvis;
 import com.promising.jarvis.core.agent.LlmAgent;
+import com.promising.jarvis.core.agent.task.AgentTask;
 import com.promising.jarvis.core.capability.CapabilityRegistry;
 import com.promising.jarvis.core.context.CommandContext;
 import com.promising.jarvis.core.memory.MemoryStore;
@@ -25,7 +26,7 @@ public final class DefaultJarvisApplicationService implements JarvisApplicationS
         context.source().sendMessage(Text.of("Jarvis 正在处理请求…"));
         String promptContext = context.selectedContext() + memory.promptFor(context.player().playerId());
         Jarvis.LOGGER.debug("Selected context for '{}': {}", context.request().text(), promptContext);
-        llmAgent.submit(context, promptContext)
+        llmAgent.submit(AgentTask.builder(context).promptContext(promptContext).build()).result()
                 .whenComplete((response, error) -> context.source().getServer().execute(() -> complete(context, response, error)));
     }
 
