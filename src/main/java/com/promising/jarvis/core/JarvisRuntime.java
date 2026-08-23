@@ -50,7 +50,8 @@ public final class JarvisRuntime {
                 new com.promising.jarvis.core.companion.RecommendationEngine(),
                 new NotificationPolicy(java.time.Clock.systemUTC(),
                         new JsonNotificationPreferencesStore(dataDirectory.resolve("notification-preferences.json")),
-                        new com.promising.jarvis.core.companion.JsonNotificationHistoryStore(dataDirectory.resolve("notification-history.json"))));
+                        new com.promising.jarvis.core.companion.JsonNotificationHistoryStore(dataDirectory.resolve("notification-history.json"))),
+                new com.promising.jarvis.core.companion.ProactiveLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker)));
         eventBus.subscribe(proactiveCompanion);
         llmAgent = new SingleThreadLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker));
         applicationService = new DefaultJarvisApplicationService(llmAgent, registry, memoryStore);
@@ -68,6 +69,7 @@ public final class JarvisRuntime {
 
     public static void shutdown() {
         if (llmAgent != null) llmAgent.close();
+        if (proactiveCompanion != null) proactiveCompanion.close();
     }
 
     public static ProactiveCompanionService proactiveCompanion() {

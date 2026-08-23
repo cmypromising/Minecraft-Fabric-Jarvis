@@ -54,6 +54,17 @@ public class RecommendationEngineTest {
                 .evaluate(state, List.of(), danger).getFirst().title());
     }
 
+    @Test
+    public void givesWaterSpecificGuidance() {
+        UUID player = UUID.randomUUID();
+        var state = state(player, 20, 20, Map.of());
+        var perception = new ProactivePerception("minecraft:ocean", "minecraft:overworld", false, false, true,
+                "EARLY_SURVIVAL", List.of(), List.of(new DangerSignal(DangerType.DROWNING, 3, "氧气余量 10/300")));
+        var recommendation = new RecommendationEngine(fixedClock()).evaluate(state, List.of(), perception).getFirst();
+        assertTrue(recommendation.message().contains("上浮"));
+        assertEquals("具体危险提醒: DROWNING", recommendation.title());
+    }
+
     private static PlayerStateSnapshot state(UUID player, float health, int food, Map<String, Integer> resources) {
         return new PlayerStateSnapshot(player, "Alex", health, food, 1, 0, 64, 0,
                 "minecraft:overworld", Difficulty.NORMAL, GameMode.SURVIVAL, resources);
