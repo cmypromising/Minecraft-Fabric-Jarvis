@@ -14,23 +14,17 @@ import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-/** Dedicated proactive ReAct agent. It never executes Minecraft commands. */
+/** Dedicated proactive ReAct agent consuming immutable awareness snapshots. */
 public final class ProactiveLlmAgent implements AutoCloseable {
     public static final int MAX_REASONING_STEPS = 6;
     private final SingleThreadLlmAgent agent;
-
-    public ProactiveLlmAgent(NLParser parser, ContextToolRegistry tools) {
-        this.agent = new SingleThreadLlmAgent(parser, tools);
-    }
+    public ProactiveLlmAgent(NLParser parser, ContextToolRegistry tools) { this.agent = new SingleThreadLlmAgent(parser, tools); }
 
     public CompletableFuture<ContentResponseBody> submit(ServerCommandSource source, UUID playerId,
-                                                          String eventWindow, ProactivePerception perception) {
-        String prompt = "你是 Minecraft 玩家的主动陪伴助手。请基于最近事件时序判断玩家是否确实需要被提醒。\n"
-                + "只在有明确帮助价值时给出简洁、因地制宜的建议；如果事件只是正常行为，也要返回简短说明而不是制造危险。\n"
-                + "禁止执行任何命令，最终只能返回 minecraft.information，type=2；不要声称执行了操作。\n"
-                + "当前主动感知摘要：维度=" + perception.dimension() + "，生物群系=" + perception.biome()
-                + "，阶段=" + perception.gamePhase() + "，夜晚=" + perception.night()
-                + "，危险信号=" + perception.dangers() + "。\n" + eventWindow;
+                                                          ActiveAwarenessContext awareness) {
+        String prompt = "你是 Minecraft 玩家的主动陪伴助手。请基于主动感知缓存和最近事件时序判断玩家是否需要提醒。\n"
+                + "只在有明确帮助价值时给出简洁建议；禁止执行任何命令，最终只能返回 minecraft.information、type=2。\n"
+                + "以下是主动感知缓存，请优先使用；如需更新事实，再调用只读工具：\n" + awareness.promptText();
         var context = new CommandContext(new CommandRequest("主动评估玩家当前情况"), source,
                 PlayerContext.from(source), prompt);
         AgentTask task = AgentTask.builder(context).type("proactive.awareness")
@@ -38,6 +32,5 @@ public final class ProactiveLlmAgent implements AutoCloseable {
                 .timeout(Duration.ofSeconds(45)).maxReasoningSteps(MAX_REASONING_STEPS).build();
         return agent.submit(task).result();
     }
-
     @Override public void close() { agent.close(); }
 }

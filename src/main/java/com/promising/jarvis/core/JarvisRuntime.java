@@ -30,6 +30,7 @@ public final class JarvisRuntime {
     private static ProactiveCompanionService proactiveCompanion;
     private static CompanionGoalService goalService;
     private static PlayerAwarenessService awareness;
+    private static com.promising.jarvis.core.companion.ActiveAwarenessContextService activeAwareness;
 
     private JarvisRuntime() {}
 
@@ -43,12 +44,15 @@ public final class JarvisRuntime {
         var eventBus = new PlayerEventBus();
         awareness = new PlayerAwarenessService(new MinecraftPlayerStateObserver(),
                 new PlayerStateChangeDetector(), eventBus, activityTracker);
+        activeAwareness = new com.promising.jarvis.core.companion.ActiveAwarenessContextService(
+                new MinecraftPlayerStateObserver(), new com.promising.jarvis.core.companion.MinecraftProactivePerception(), activityTracker);
         var goalStore = new JsonGoalStore(dataDirectory.resolve("goals.json"));
         goalService = new CompanionGoalService(goalStore);
         proactiveCompanion = new ProactiveCompanionService(new NotificationPolicy(java.time.Clock.systemUTC(),
                         new JsonNotificationPreferencesStore(dataDirectory.resolve("notification-preferences.json")),
-                        new com.promising.jarvis.core.companion.JsonNotificationHistoryStore(dataDirectory.resolve("notification-history.json"))),
-                new com.promising.jarvis.core.companion.ProactiveLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker)));
+                new com.promising.jarvis.core.companion.JsonNotificationHistoryStore(dataDirectory.resolve("notification-history.json"))),
+                new com.promising.jarvis.core.companion.ProactiveLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker)), activeAwareness);
+        eventBus.subscribe(activeAwareness);
         eventBus.subscribe(proactiveCompanion);
         llmAgent = new SingleThreadLlmAgent(new DeepSeekParser(), ContextToolRegistries.defaults(activityTracker));
         applicationService = new DefaultJarvisApplicationService(llmAgent, registry, memoryStore);
@@ -82,5 +86,10 @@ public final class JarvisRuntime {
     public static PlayerAwarenessService awareness() {
         if (awareness == null) throw new IllegalStateException("Jarvis runtime is not initialized");
         return awareness;
+    }
+
+    public static com.promising.jarvis.core.companion.ActiveAwarenessContextService activeAwareness() {
+        if (activeAwareness == null) throw new IllegalStateException("Jarvis runtime is not initialized");
+        return activeAwareness;
     }
 }

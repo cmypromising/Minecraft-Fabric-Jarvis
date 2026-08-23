@@ -7,6 +7,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Box;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import net.minecraft.registry.Registries;
 
 public final class MinecraftProactivePerception {
     private final GamePhaseClassifier phaseClassifier = new GamePhaseClassifier();
@@ -16,6 +19,11 @@ public final class MinecraftProactivePerception {
         var pos = player.getBlockPos();
         boolean night = world.getTimeOfDay() % 24000 >= 13000 && world.getTimeOfDay() % 24000 < 23000;
         boolean hostile = !world.getEntitiesByClass(HostileEntity.class, new Box(pos).expand(16), Entity::isAlive).isEmpty();
+        Map<String, Integer> nearby = new HashMap<>();
+        for (Entity entity : world.getEntitiesByClass(Entity.class, new Box(pos).expand(16), e -> e != player && e.isAlive())) {
+            String id = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
+            nearby.merge(id, 1, Integer::sum);
+        }
         var dangers = new ArrayList<DangerSignal>();
         if (player.isSubmergedInWater() && player.getAir() <= player.getMaxAir() / 2)
             dangers.add(new DangerSignal(DangerType.DROWNING, player.getAir() <= 20 ? 3 : 2,
@@ -34,6 +42,8 @@ public final class MinecraftProactivePerception {
         if (danger) evidence.add("玩家处于需要优先处理的危险状态");
         dangers.stream().map(DangerSignal::evidence).forEach(evidence::add);
         return new ProactivePerception(biome, world.getRegistryKey().getValue().toString(), night, hostile,
-                danger, phase.phase().name(), evidence, dangers);
+                danger, phase.phase().name(), evidence, dangers, world.isRaining(), world.isThundering(),
+                world.getLightLevel(pos), world.isSkyVisible(pos), player.isSubmergedInWater(), player.isInLava(),
+                player.isOnFire(), player.getAir(), player.getMaxAir(), nearby.toString());
     }
 }

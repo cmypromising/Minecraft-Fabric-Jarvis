@@ -14,7 +14,7 @@ public class ProactiveCompanionServiceTest {
                 return java.util.Optional.empty();
             }
         };
-        var service = new ProactiveCompanionService(new NotificationPolicy(), null);
+        var service = new ProactiveCompanionService(new NotificationPolicy(), null, null);
         // Minecraft integration supplies the server; this test documents the interval contract.
         assertEquals(100, 100);
     }
