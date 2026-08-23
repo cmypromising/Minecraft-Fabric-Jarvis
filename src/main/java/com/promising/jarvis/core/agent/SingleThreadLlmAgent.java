@@ -10,6 +10,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.HashSet;
+import java.util.Set;
 
 /** Serializes LLM calls on one named, daemon worker thread. */
 public final class SingleThreadLlmAgent implements LlmAgent {
@@ -64,6 +66,8 @@ public final class SingleThreadLlmAgent implements LlmAgent {
 
     private ContentResponseBody runReasoningLoop(AgentTask task) throws Exception {
         String context = task.promptContext();
+        Set<String> executedToolCalls = new HashSet<>();
+        boolean forceFinalResponse = false;
         for (int step = 0; step < task.maxReasoningSteps(); step++) {
             if (task.isExpired()) {
                 task.expire();
@@ -76,10 +80,23 @@ public final class SingleThreadLlmAgent implements LlmAgent {
                             + "最多调用工具 " + task.maxReasoningSteps() + " 次。");
             if (response == null || !response.isContextToolRequest()) return response;
 
-            String toolResult = executeToolOnMinecraftThread(task.context(), response.getTool(), response.getToolArguments());
+            String toolName = response.getTool();
+            String toolArguments = response.getToolArguments() == null ? "" : response.getToolArguments();
+            String callKey = toolName + "\u0000" + toolArguments;
+            if (forceFinalResponse || !executedToolCalls.add(callKey)) {
+                forceFinalResponse = true;
+                context += "\n\nSystem constraint: tool " + toolName
+                        + " was already called. Return the final response without calling tools again.";
+                continue;
+            }
+            String toolResult = executeToolOnMinecraftThread(task.context(), toolName, toolArguments);
             context += "\n\n工具调用结果 [" + response.getTool() + "]: " + toolResult;
         }
-        throw new IllegalStateException("LLM agent exceeded the context tool step limit");
+        ContentResponseBody fallback = new ContentResponseBody();
+        fallback.setCapability("minecraft.information");
+        fallback.setType(3);
+        fallback.setAdditionalInfo("上下文工具调用已达到安全上限，已停止重复读取。请重新描述需求，或明确指定需要查询的信息。");
+        return fallback;
     }
 
     private String executeToolOnMinecraftThread(CommandContext context, String name, String arguments)

@@ -44,4 +44,38 @@ public class ReActLlmAgentTest {
             assertEquals(2, calls.get());
         }
     }
+
+    @Test
+    public void doesNotExecuteTheSameToolCallTwice() throws Exception {
+        AtomicInteger parserCalls = new AtomicInteger();
+        AtomicInteger toolCalls = new AtomicInteger();
+        NLParser parser = (request, context) -> {
+            ContentResponseBody response = new ContentResponseBody();
+            if (parserCalls.getAndIncrement() < 2) {
+                response.setCapability("context.tool");
+                response.setTool("test.fact");
+                response.setToolArguments("same");
+            } else {
+                response.setCapability("minecraft.information");
+                response.setAdditionalInfo(context);
+            }
+            return response;
+        };
+        ContextToolRegistry tools = new ContextToolRegistry().register(new ContextTool() {
+            public String name() { return "test.fact"; }
+            public String description() { return "fact"; }
+            public String execute(net.minecraft.server.command.ServerCommandSource source, String arguments) {
+                toolCalls.incrementAndGet();
+                return "42";
+            }
+        });
+        try (SingleThreadLlmAgent agent = new SingleThreadLlmAgent(parser, tools)) {
+            ContentResponseBody result = agent.submit(
+                    new CommandContext(new CommandRequest("fact"), null, null, ""), "base")
+                    .get(2, TimeUnit.SECONDS);
+            assertEquals("minecraft.information", result.getCapability());
+            assertEquals(1, toolCalls.get());
+            assertEquals(3, parserCalls.get());
+        }
+    }
 }
