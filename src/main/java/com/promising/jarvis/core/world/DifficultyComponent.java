@@ -1,9 +1,10 @@
 package com.promising.jarvis.core.world;
 
+import com.promising.jarvis.core.context.ContextComponent;
 import net.minecraft.server.command.ServerCommandSource;
 
 /** Current difficulty and player game mode facts. */
-public final class DifficultyComponent implements WorldInfoComponent {
+public final class DifficultyComponent implements ContextComponent {
     public String id() { return "world.difficulty"; }
 
     public boolean supports(String request) {

@@ -1,9 +1,10 @@
 package com.promising.jarvis.core.world;
 
+import com.promising.jarvis.core.context.ContextComponent;
 import net.minecraft.server.command.ServerCommandSource;
 
 /** Current player location and dimension facts. */
-public final class LocationComponent implements WorldInfoComponent {
+public final class LocationComponent implements ContextComponent {
     public String id() { return "world.location"; }
 
     public boolean supports(String request) {

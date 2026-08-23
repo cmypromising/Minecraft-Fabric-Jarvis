@@ -1,9 +1,10 @@
 package com.promising.jarvis.core.world;
 
+import com.promising.jarvis.core.context.ContextComponent;
 import net.minecraft.server.command.ServerCommandSource;
 
 /** Current world time and weather facts. */
-public final class TimeWeatherComponent implements WorldInfoComponent {
+public final class TimeWeatherComponent implements ContextComponent {
     public String id() { return "world.time-weather"; }
 
     public boolean supports(String request) {

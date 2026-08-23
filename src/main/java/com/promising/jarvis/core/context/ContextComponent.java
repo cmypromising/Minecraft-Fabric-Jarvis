@@ -1,9 +1,9 @@
-package com.promising.jarvis.core.world;
+package com.promising.jarvis.core.context;
 
 import net.minecraft.server.command.ServerCommandSource;
 
-/** Selectively exposes one category of current world facts to the LLM. */
-public interface WorldInfoComponent {
+/** A request-selected, bounded piece of optional LLM context. */
+public interface ContextComponent {
     String id();
     boolean supports(String request);
     String collect(ServerCommandSource source);
